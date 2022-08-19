@@ -3,8 +3,8 @@ ESP01,DHT11,DHT22 to Thingspeak;
 DHT部分來自程式庫towsensor範例;
 修改本來兩個DHT11為DHT11+DHT22;
 只需要修改DHT.read及byte&float定義就可以修改sensor類型;
-WIFI連接部分來自網絡;
 31/07/2022 zhaicho;
+18/08/2022增加WIFI睡眠;
 */
 #include <SimpleDHT.h>
 #include <ESP8266WiFi.h>
@@ -25,8 +25,8 @@ const char *resource = "/update?api_key=";
 // Thing Speak API server
 const char *server = "api.thingspeak.com";
 
-int dataPinSensor1 = 0;
-int dataPinSensor2 = 2;
+int dataPinSensor1 = 2;
+int dataPinSensor2 = 0;
 SimpleDHT11 dht1(dataPinSensor1);
 SimpleDHT22 dht2(dataPinSensor2);
 
@@ -34,7 +34,7 @@ void setup()
 {
   Serial.begin(115200);
   //網絡連接;
-  Serial.print("準備WIFI連綫.名稱:");
+  Serial.print("Connecting to:");
   Serial.println(ssid);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -52,13 +52,9 @@ void setup()
 void loop()
 {
   //讀取溫度並輸出終端機;
-  // Reading data from sensor 1...
   Serial.println("=================================");
-
-  // Reading data from sensor 1...
   Serial.println("Getting data from sensor 1...");
 
-  // read without samples.
   byte temperature = 0;
   byte humidity = 0;
   int err = SimpleDHTErrSuccess;
@@ -72,20 +68,15 @@ void loop()
     // return;//返回重複連接Sensor;
   }
 
-  // converting Celsius to Fahrenheit
-  // byte f = temperature * 1.8 + 32;
   byte t = temperature;
   byte h = humidity;
   Serial.print("DHT11: ");
   Serial.print((int)temperature);
   Serial.print(" 'C, ");
-  // Serial.print((int)f); Serial.print(" *F, ");
   Serial.print((int)humidity);
   Serial.println(" %");
   delay(1000);
 
-  // Reading data from sensor 2...
-  // ============================
   Serial.println("Getting data from sensor 2...");
 
   float temperature2 = 0;
@@ -100,14 +91,11 @@ void loop()
     // return;//返回重複連接Sensor;
   }
 
-  // converting Celsius to Fahrenheit
-  // float fb = temperature2-6 * 1.8 + 32;
-  float t2 = (int)temperature2 - 5;
-  float h2 = (int)humidity2 + 30;
+  float t2 = (int)temperature2 - 2;
+  float h2 = (int)humidity2 + 15;
   Serial.print("DHT22: ");
   Serial.print(t2);
   Serial.print("'C, ");
-  // Serial.print((int)fb); Serial.print(" *F, ");
   Serial.print(h2);
   Serial.println("%");
   Serial.println("=================================");
@@ -126,7 +114,7 @@ void loop()
   }
   Serial.print("Request resource: ");
   Serial.println(resource);
-   //防止sensor錯誤時上傳信息為0;
+  //防止sensor錯誤時上傳信息為0;
   if (h != 0 && h2 > 30)
   {
     client.print(String("GET ") + resource + apiKey + "&field1=" + t + "&field2=" + h + "&field3=" + t2 + "&field4=" + h2 +
@@ -174,7 +162,12 @@ void loop()
 
   Serial.println("\nclosing connection");
   Serial.println("=================================");
-  Serial.println("");
   client.stop();
-  delay(1000 * 60);
+  //調節器睡眠無需檢查WIFI狀態,WAKE命令後會自動重連;
+  WiFi.forceSleepBegin(); // WIFI睡眠;
+  Serial.println("WIFI going to Sleep");
+  delay(1000 * 5*60);
+  WiFi.forceSleepWake(); // WIFI睡眠結束;
+  Serial.println("WIFI Wake up");
+  Serial.println("");
 }
