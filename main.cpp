@@ -11,15 +11,15 @@ DHT部分來自程式庫towsensor範例;
 #include <WiFiClient.h>
 
 #ifndef STASSID
-#define STASSID "Hou lan ging"
-#define STAPSK "houyaoying"
+#define STASSID "Youer WIFI Name"
+#define STAPSK "Youer password"
 #endif
 
 const char *ssid = STASSID;
 const char *password = STAPSK;
 
 //資料庫地址;
-const char *apiKey = "NWRBFUSVAPMZAT6A";
+const char *apiKey = "Youer APIKEY";
 const char *resource = "/update?api_key=";
 
 // Thing Speak API server
